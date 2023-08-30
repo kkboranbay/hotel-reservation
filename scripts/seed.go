@@ -2,27 +2,28 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 
 	"github.com/kkboranbay/hotel-reservation/db"
 	"github.com/kkboranbay/hotel-reservation/types"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func main() {
-	ctx := context.Background()
-	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(db.DBURI))
-	if err != nil {
-		log.Fatal(err)
-	}
-	hotelStore := db.NewMongoHotelStore(client, db.DBNAME)
-	roomStore := db.NewMongoRoomStore(client, db.DBNAME)
+var (
+	client     *mongo.Client
+	roomStore  db.RoomStore
+	hotelStore db.HotelStore
+	ctx        = context.Background()
+)
 
+func seedHotel(name string, location string, rating int) {
 	hotel := types.Hotel{
-		Name:     "Rixos",
-		Location: "Almaty",
+		Name:     name,
+		Location: location,
+		Rooms:    []primitive.ObjectID{},
+		Rating:   rating,
 	}
 
 	rooms := []types.Room{
@@ -47,10 +48,36 @@ func main() {
 
 	for _, room := range rooms {
 		room.HotelID = insertedHotel.ID
-		insertedRoom, err := roomStore.InsertRoom(ctx, &room)
+		_, err := roomStore.InsertRoom(ctx, &room)
 		if err != nil {
 			log.Fatal(err)
 		}
-		fmt.Println(insertedRoom)
 	}
+}
+
+func main() {
+	seedHotel("Rixos", "Almaty", 5)
+	seedHotel("Royal Tulip", "Almaty", 4)
+	seedHotel("The Rits", "Astana", 5)
+}
+
+// the init function is a special function that is used to perform initialization tasks before
+// the program's execution begins. The init function is automatically called
+// by the Go runtime before the main function is executed.
+func init() {
+	var err error
+	client, err = mongo.Connect(context.TODO(), options.Client().ApplyURI(db.DBURI))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	client.Database(db.DBNAME).Collection("hotels").Drop(ctx)
+	client.Database(db.DBNAME).Collection("rooms").Drop(ctx)
+
+	// if err := client.Database(db.DBNAME).Drop(ctx); err != nil {
+	// log.Fatal(err) // (AtlasError) user is not allowed to do action [dropDatabase] on [hotel-reservation.]
+	// }
+
+	hotelStore = db.NewMongoHotelStore(client)
+	roomStore = db.NewMongoRoomStore(client, hotelStore)
 }
