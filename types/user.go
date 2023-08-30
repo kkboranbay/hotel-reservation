@@ -39,11 +39,6 @@ type CreateUserParams struct {
 	Password  string `json:"password"`
 }
 
-//	{
-//	    "email": "email is invalid",
-//	    "firstName": "firstName length should be at least 2 characters",
-//	    "password": "password length should be at least 6 characters"
-//	}
 func (params CreateUserParams) Validate() map[string]string {
 	errors := map[string]string{}
 	if len(params.FirstName) < minFirstNameLen {
