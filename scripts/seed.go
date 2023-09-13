@@ -15,8 +15,26 @@ var (
 	client     *mongo.Client
 	roomStore  db.RoomStore
 	hotelStore db.HotelStore
+	userStore  db.UserStore
 	ctx        = context.Background()
 )
+
+func seedUser(fname, lname, email string) {
+	user, err := types.NewUserFromParams(types.CreateUserParams{
+		FirstName: fname,
+		LastName:  lname,
+		Email:     email,
+		Password:  "password",
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	_, err = userStore.InsertUser(context.TODO(), user)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
 
 func seedHotel(name string, location string, rating int) {
 	hotel := types.Hotel{
@@ -56,9 +74,10 @@ func seedHotel(name string, location string, rating int) {
 }
 
 func main() {
-	seedHotel("Rixos", "Almaty", 5)
-	seedHotel("Royal Tulip", "Almaty", 4)
-	seedHotel("The Rits", "Astana", 5)
+	// seedHotel("Rixos", "Almaty", 5)
+	// seedHotel("Royal Tulip", "Almaty", 4)
+	// seedHotel("The Rits", "Astana", 5)
+	seedUser("Sultan", "Xan", "sultan@gmail.com")
 }
 
 // the init function is a special function that is used to perform initialization tasks before
@@ -73,6 +92,7 @@ func init() {
 
 	client.Database(db.DBNAME).Collection("hotels").Drop(ctx)
 	client.Database(db.DBNAME).Collection("rooms").Drop(ctx)
+	client.Database(db.DBNAME).Collection("users").Drop(ctx)
 
 	// if err := client.Database(db.DBNAME).Drop(ctx); err != nil {
 	// log.Fatal(err) // (AtlasError) user is not allowed to do action [dropDatabase] on [hotel-reservation.]
@@ -80,4 +100,5 @@ func init() {
 
 	hotelStore = db.NewMongoHotelStore(client)
 	roomStore = db.NewMongoRoomStore(client, hotelStore)
+	userStore = db.NewMongoUserStore(client)
 }
