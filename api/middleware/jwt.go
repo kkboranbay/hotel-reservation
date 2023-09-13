@@ -3,6 +3,7 @@ package middleware
 import (
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
@@ -11,45 +12,47 @@ import (
 func JWTAuthentication(c *fiber.Ctx) error {
 	token, ok := c.GetReqHeaders()["X-Auth-Token"]
 	if !ok {
+		fmt.Println("token not present in the header")
 		return fmt.Errorf("unauthenticated")
 	}
 
-	if err := parseJWTToken(token); err != nil {
+	claims, err := validateToken(token)
+	if err != nil {
 		return err
 	}
 
-	fmt.Println("token:", token)
+	expiresFloat := claims["expires"].(float64)
+	expires := int64(expiresFloat)
+	// Check token expiration
+	if time.Now().Unix() > expires {
+		return fmt.Errorf("token expired")
+	}
 
-	return nil
+	return c.Next()
 }
 
-// go get -u github.com/golang-jwt/jwt/v5
-func parseJWTToken(tokenStr string) error {
-	// Parse takes the token string and a function for looking up the key. The latter is especially
-	// useful if you use multiple keys for your application.  The standard is to use 'kid' in the
-	// head of the token to identify which key to use, but the parsed token (head and claims) is provided
-	// to the callback, providing flexibility.
+func validateToken(tokenStr string) (jwt.MapClaims, error) {
 	token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
-		// Don't forget to validate the alg is what you expect:
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			fmt.Printf("Unexpected signing method: %v", token.Header["alg"])
 			return nil, fmt.Errorf("unauthorized")
 		}
 
-		// export JWT_SECRET=dsadasdasdasfasfa
 		secret := os.Getenv("JWT_SECRET")
-		// hmacSampleSecret is a []byte containing your secret, e.g. []byte("my_secret_key")
 		return []byte(secret), nil
 	})
-
 	if err != nil {
 		fmt.Println("failed to parse JWT token:", err)
-		return fmt.Errorf("unauthorized")
+		return nil, fmt.Errorf("unauthorized")
+	}
+	if !token.Valid {
+		fmt.Println("invalid token")
+		return nil, fmt.Errorf("unauthorized")
 	}
 
-	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		fmt.Println(claims)
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		return nil, fmt.Errorf("unauthorized")
 	}
-
-	return fmt.Errorf("unauthorized")
+	return claims, nil
 }
