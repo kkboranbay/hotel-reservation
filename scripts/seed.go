@@ -74,10 +74,10 @@ func seedHotel(name string, location string, rating int) {
 }
 
 func main() {
-	// seedHotel("Rixos", "Almaty", 5)
-	// seedHotel("Royal Tulip", "Almaty", 4)
-	// seedHotel("The Rits", "Astana", 5)
-	seedUser("Sultan", "Xan", "sultan@gmail.com")
+	seedHotel("Rixos", "Almaty", 5)
+	seedHotel("Royal Tulip", "Almaty", 4)
+	seedHotel("The Rits", "Astana", 5)
+	seedUser("Leo", "Ken", "leoken@gmail.com")
 }
 
 // the init function is a special function that is used to perform initialization tasks before
