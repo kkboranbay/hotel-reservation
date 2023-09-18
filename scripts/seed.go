@@ -19,7 +19,7 @@ var (
 	ctx        = context.Background()
 )
 
-func seedUser(fname, lname, email string) {
+func seedUser(isAdmin bool, fname, lname, email string) {
 	user, err := types.NewUserFromParams(types.CreateUserParams{
 		FirstName: fname,
 		LastName:  lname,
@@ -29,6 +29,8 @@ func seedUser(fname, lname, email string) {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	user.IsAdmin = isAdmin
 
 	_, err = userStore.InsertUser(context.TODO(), user)
 	if err != nil {
@@ -77,7 +79,8 @@ func main() {
 	seedHotel("Rixos", "Almaty", 5)
 	seedHotel("Royal Tulip", "Almaty", 4)
 	seedHotel("The Rits", "Astana", 5)
-	seedUser("Leo", "Ken", "leoken@gmail.com")
+	seedUser(false, "Leo", "Ken", "leoken@gmail.com")
+	seedUser(true, "Admin", "Admin", "admin@gmail.com")
 }
 
 // the init function is a special function that is used to perform initialization tasks before
