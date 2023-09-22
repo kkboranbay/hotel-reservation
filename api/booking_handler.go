@@ -5,7 +5,6 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/kkboranbay/hotel-reservation/db"
-	"github.com/kkboranbay/hotel-reservation/types"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
@@ -35,8 +34,8 @@ func (h *BookingHandler) HandleGetBooking(c *fiber.Ctx) error {
 		return err
 	}
 
-	authUser, ok := c.Context().UserValue("user").(*types.User)
-	if !ok {
+	authUser, err := getAuthUser(c)
+	if err != nil {
 		return err
 	}
 
@@ -48,4 +47,33 @@ func (h *BookingHandler) HandleGetBooking(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(booking)
+}
+
+func (h *BookingHandler) HandleCancelBooking(c *fiber.Ctx) error {
+	id := c.Params("id")
+	booking, err := h.store.Book.GetBookingById(c.Context(), id)
+	if err != nil {
+		return err
+	}
+
+	authUser, err := getAuthUser(c)
+	if err != nil {
+		return err
+	}
+
+	if booking.UserId != authUser.ID {
+		return c.Status(http.StatusUnauthorized).JSON(genericResponse{
+			Type: "error",
+			Msg:  "not authorized",
+		})
+	}
+
+	if err = h.store.Book.UpdateBooking(c.Context(), id, bson.M{"canceled": true}); err != nil {
+		return err
+	}
+
+	return c.JSON(genericResponse{
+		Type: "msg",
+		Msg:  "updated",
+	})
 }
