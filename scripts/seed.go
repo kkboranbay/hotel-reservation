@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"math/rand"
 	"time"
 
 	"github.com/kkboranbay/hotel-reservation/db"
@@ -43,4 +44,11 @@ func main() {
 
 	booking := fixtures.AddBooking(store, room.ID, user.ID, time.Now(), time.Now().AddDate(0, 0, 5))
 	fmt.Println("booking ->", booking)
+
+	for i := 0; i < 100; i++ {
+		name := fmt.Sprintf("some random name %d", i)
+		location := fmt.Sprintf("location %d", i)
+
+		fixtures.AddHotel(store, name, location, rand.Intn(5)+1, nil)
+	}
 }
