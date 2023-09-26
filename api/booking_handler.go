@@ -17,7 +17,7 @@ func NewBookingHandler(store *db.Store) *BookingHandler {
 }
 
 func (h *BookingHandler) HandleGetBookings(c *fiber.Ctx) error {
-	bookings, err := h.store.Book.GetBookings(c.Context(), bson.M{})
+	bookings, err := h.store.Book.GetBookings(c.Context(), db.Map{})
 	if err != nil {
 		return ErrResourceNotFound("bookings")
 	}

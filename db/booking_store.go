@@ -11,7 +11,7 @@ import (
 
 type BookingStore interface {
 	InsertBooking(context.Context, *types.Booking) (*types.Booking, error)
-	GetBookings(context.Context, bson.M) ([]*types.Booking, error)
+	GetBookings(context.Context, Map) ([]*types.Booking, error)
 	GetBookingById(context.Context, string) (*types.Booking, error)
 	UpdateBooking(context.Context, string, bson.M) error
 }
@@ -39,7 +39,7 @@ func (s *MongoBookingStore) InsertBooking(ctx context.Context, booking *types.Bo
 	return booking, nil
 }
 
-func (s *MongoBookingStore) GetBookings(ctx context.Context, filter bson.M) ([]*types.Booking, error) {
+func (s *MongoBookingStore) GetBookings(ctx context.Context, filter Map) ([]*types.Booking, error) {
 	curr, err := s.coll.Find(ctx, filter)
 	if err != nil {
 		return nil, err
